@@ -62,9 +62,18 @@ Mockito 단위 테스트입니다. 그 하나가 전체 컨텍스트를 띄우�
 New self-hosted runner 가 주는 토큰 사용). `actions/checkout@v7` 은 러너
 v2.327.1 이상을 요구하므로, 새로 받는 러너면 문제없습니다.
 
-러너를 당분간 둘 생각이 없다면, 각 레포 `ci.yml` 의 `deploy` job 조건에서
-`push` 를 빼고 `workflow_dispatch` 전용으로 돌리면 24시간 대기 job 이
-쌓이지 않습니다.
+그래서 각 레포 `ci.yml` 의 `deploy` job 은 **수동 실행 전용**으로 두었습니다:
+
+```yaml
+if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+```
+
+main 에 push 해도 검사만 돌고 배포 job 은 건너뜁니다. 배포하려면 Actions 탭에서
+**Run workflow** 로 `main` 을 골라 실행합니다. `main` 이 아닌 브랜치를 골라 실행하면
+`github.ref` 조건에 걸려 배포는 건너뛰고 검사만 돕니다.
+
+러너를 등록한 뒤 push 자동 배포로 되돌리려면 조건을
+`github.event_name != 'pull_request'` 로 바꾸면 됩니다.
 
 ### kwak-service-be 배포 파일이 레포에 없음
 

@@ -28,9 +28,13 @@ jobs:
     uses: Kyunglock/kwak-service-infra/.github/workflows/ci-frontend.yml@main
   deploy:
     needs: ci
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
     uses: Kyunglock/kwak-service-infra/.github/workflows/deploy-frontend.yml@main
 ```
+
+배포는 Actions 탭 → 해당 워크플로 → **Run workflow** 에서 `main` 을 골라 실행합니다.
+러너를 등록한 뒤 push 자동 배포로 되돌리려면 `deploy` 의 조건을
+`github.event_name != 'pull_request'` 로 바꾸면 됩니다.
 
 재사용 워크플로 안의 `actions/checkout`은 **호출한 레포의 해당 커밋**을 받아옵니다.
 그래서 별도 토큰 없이 동작합니다.
@@ -40,7 +44,7 @@ jobs:
 | 종류 | 러너 | 트리거 |
 |---|---|---|
 | 검사 | `ubuntu-latest` | PR + main push |
-| 배포 | `self-hosted` | main push / 수동 실행만 |
+| 배포 | `self-hosted` | **수동 실행(`workflow_dispatch`) 전용** |
 
 `kwak-service-fe`와 `kwak-service-be`는 **public 레포**입니다. public 레포에서
 fork PR이 self-hosted 러너에 닿으면 남의 코드가 배포 서버에서 실행됩니다.
@@ -52,6 +56,9 @@ fork PR이 self-hosted 러너에 닿으면 남의 코드가 배포 서버에서 
 배포 job 은 `self-hosted` 러너를 요구하는데, 현재 등록된 러너가 없습니다.
 fe 18회 / be 29회의 기존 배포 실행이 전부 24시간 대기 후 자동 취소됐습니다 —
 **배포 자동화는 한 번도 동작한 적이 없습니다.** 자세한 내용은 `docs/CI-CD.md` 참고.
+
+그래서 배포는 **수동 실행 전용**으로 두었습니다. push 마다 죽은 job 이 쌓이지
+않고, main 의 CI 상태도 검사 결과만 반영합니다.
 
 검사(ubuntu-latest)는 정상 동작합니다.
 
