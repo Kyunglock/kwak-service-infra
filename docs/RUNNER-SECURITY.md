@@ -26,7 +26,25 @@ fork PR 로는 돌지 않습니다. **하지만 이것만 믿으면 안 됩니�
 
 레포마다 따로 해야 합니다 (`kwak-service-fe`, `kwak-service-be`).
 
-### 1. fork PR 승인 — 가장 중요
+### 0. PR 생성을 collaborator 로 제한 — 제일 확실
+
+**Settings → General → Features → "Pull requests" 드롭다운 → `Collaborators only`**
+
+외부인이 PR 자체를 열지 못하게 합니다. fork PR 이 안 들어오므로 fork 코드가
+CI 에서 실행될 일이 없고, 위에 적은 "PR 브랜치의 워크플로 파일로 가드를 우회하는"
+경로도 함께 닫힙니다.
+
+레포는 public 으로 유지됩니다 — 코드 공개, fork, 이슈·댓글은 그대로이고
+PR 생성만 막힙니다. 개인 레포에서 collaborator 는 초대받은 사람이므로,
+아무도 초대하지 않았다면 소유자만 PR 을 열 수 있습니다. 본인 PR 은 정상입니다.
+
+현재 네 레포 모두 `pull_request_creation_policy` 가 `all` (기본값, 아무나 가능)
+입니다.
+
+외부 기여를 받을 계획이 없다면 이것만으로 충분하고, 아래 1번은 이중 방어입니다.
+반대로 기여를 받을 거라면 1번이 주 방어가 됩니다.
+
+### 1. fork PR 승인 — PR 을 열어둘 경우 필수
 
 **Settings → Actions → General → Fork pull request workflows from outside collaborators**
 
@@ -35,7 +53,8 @@ fork PR 로는 돌지 않습니다. **하지만 이것만 믿으면 안 됩니�
 - **`Require approval for all external collaborators` 로 바꿀 것**
   — 모든 fork PR 이 승인을 거칩니다
 
-public 레포에 self-hosted 러너를 붙인다면 이 한 줄이 제일 중요합니다.
+0번으로 PR 생성을 막았더라도 같이 켜 두는 편이 좋습니다. 나중에 PR 정책을
+다시 열었을 때 구멍이 생기지 않습니다.
 
 ### 2. GITHUB_TOKEN 기본 권한
 
@@ -60,10 +79,24 @@ public 레포에 self-hosted 러너를 붙인다면 이 한 줄이 제일 중요
 - 검사(lint/test/build)를 `self-hosted` 로 옮기는 것.
   검사는 전부 `ubuntu-latest` 에 두는 게 이 구조의 전제입니다.
 
-## 더 간단한 길
+## 선택지 비교
+
+| 방법 | 레포 공개 유지 | 관리 부담 |
+|---|---|---|
+| PR 생성을 `Collaborators only` (0번) | O | 한 번 설정 |
+| fork PR 승인 필수 (1번) | O | PR 올 때마다 diff 검토 |
+| private 전환 | X | 한 번 설정 |
+
+혼자 개발하면서 레포는 공개해 두고 싶다면 **0번**이 맞습니다.
+
+## private 전환
 
 **`kwak-service-fe` 와 `kwak-service-be` 를 private 으로 내리면** 이 경고와
 fork PR 벡터가 통째로 사라집니다.
+
+대신 GitHub 호스팅 러너 사용 시간이 무제한(public)에서 Free 플랜 월 2,000분으로
+바뀝니다. 현재 검사 시간은 세 레포 합쳐 1회 약 4분이라 월 500회 push 까지는
+여유가 있고, self-hosted 에서 도는 배포 job 은 이 한도에 포함되지 않습니다.
 
 `kwak-service-infra` 만 public 이면 재사용 워크플로 호출에는 충분합니다.
 private 레포가 public 레포의 워크플로를 호출하는 방향은 막히지 않기 때문입니다.
