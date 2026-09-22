@@ -9,6 +9,10 @@ on:
         type: string
         default: '21'
 
+# GITHUB_TOKEN 은 읽기만 있으면 된다. 이 워크플로들은 커밋·이슈·패키지를 건드리지 않는다.
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -42,6 +46,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       # 마이그레이션 검사 스크립트는 infra 에 있다. 호출한 레포를 덮어쓰지 않도록
       # 별도 디렉터리로 받는다.

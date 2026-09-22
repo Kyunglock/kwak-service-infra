@@ -12,13 +12,20 @@ on:
         type: string
         default: '20'
 
+# GITHUB_TOKEN 은 읽기만 있으면 된다. 이 워크플로들은 커밋·이슈·패키지를 건드리지 않는다.
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       # 재사용 워크플로 안에서 checkout 은 호출한 레포/커밋을 받아온다.
+      # 빌드 단계가 토큰을 주워갈 수 없도록 자격증명은 남기지 않는다.
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v7
         with:

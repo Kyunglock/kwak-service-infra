@@ -81,8 +81,12 @@ main 에 push 해도 검사만 돌고 배포 job 은 건너뜁니다. 배포하�
 `docker-compose.yml`도 각 서비스 `Dockerfile`도 git에 없습니다.** gitignore에 있는
 것도 아니고 그냥 존재하지 않습니다.
 
-위에 적은 대로 배포 job 이 실행된 적이 없어서 이 문제는 아직 드러나지 않았을
-뿐입니다. 러너를 등록하는 순간 `docker compose` 가 파일을 못 찾고 실패합니다.
+러너 작업공간에 손으로 만들어 두는 것으로는 해결되지 않습니다 —
+`actions/checkout`은 `clean` 입력이 기본 `true`라 job 시작 시 `git clean -ffdx`로
+작업공간을 비웁니다. 레포에 커밋되어 있어야 합니다.
+
+배포 job 이 실행된 적이 없어서 아직 드러나지 않았을 뿐입니다.
+러너를 등록하는 순간 `docker compose` 가 파일을 못 찾고 실패합니다.
 
 `deploy-compose.yml`에 파일 존재 확인 단계를 넣어, 이 경우 애매한 docker 에러 대신
 명확한 메시지로 실패하게 해두었습니다. **러너에 있는 실제 파일을 레포에 커밋하는 것이
@@ -114,6 +118,32 @@ collector도 compose가 `env_file: .env`를 요구하는데 `.env`는 당연히 
 
 서비스 레포가 `@main`으로 호출하므로 infra 변경이 즉시 반영됩니다. 안정성이 필요해지면
 태그를 끊어 `@v1` 형태로 고정하세요.
+
+## 러너 보안
+
+public 레포 + self-hosted 러너 조합의 위험과, 러너를 붙이기 전에 해야 할
+레포 설정은 `RUNNER-SECURITY.md` 에 정리했습니다. 워크플로 조건만으로는
+fork PR 을 막을 수 없습니다.
+
+## 미룬 것: 날짜 의존 flaky 테스트
+
+`FortuneServiceTest` 와 `TradeCaptureServiceTest` 는
+
+```java
+private static final LocalDate TODAY = LocalDate.now(ZoneId.of("Asia/Seoul"));
+```
+
+로 **클래스 로드 시점에** 날짜를 고정하는데, 프로덕션(`FortuneServiceImpl`,
+`TradeCaptureServiceImpl`)은 호출 시점에 `LocalDate.now(KST)` 를 구합니다.
+테스트 실행 중 KST 자정을 넘기면 스텁 키와 실제 인자가 어긋나 깨집니다.
+
+2026-09-22 의 main 빌드(`d6ffe89`)가 실제로 이것으로 실패했습니다 — PR 브랜치
+(`766d107`)와 트리가 완전히 동일한데 빌드 시각이 KST 23:57:58~00:00:18 로
+자정을 걸쳤습니다.
+
+고치려면 두 서비스에 `Clock` 을 주입해야 합니다. `TradeCaptureServiceTest` 는
+미래 날짜 보정과 과거 날짜 보존을 실제로 단언하고 있어 `any(LocalDate.class)`
+매처로 뭉개면 테스트가 무의미해집니다.
 
 ## 액션 버전
 

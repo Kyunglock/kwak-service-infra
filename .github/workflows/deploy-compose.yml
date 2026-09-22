@@ -21,20 +21,26 @@ concurrency:
   group: deploy-compose-${{ github.repository }}
   cancel-in-progress: false
 
+# GITHUB_TOKEN 은 읽기만 있으면 된다. 이 워크플로들은 커밋·이슈·패키지를 건드리지 않는다.
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: self-hosted
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      # checkout 은 untracked 파일을 지우지 않는다. 러너에 남은 파일에 기대고 있으면
-      # 새 러너에서 조용히 깨지므로, 여기서 크게 실패시킨다.
+      # checkout 은 기본으로 git clean -ffdx 를 돌려 작업공간을 비운다.
+      # 러너에 수동으로 둔 compose 파일이 있어도 남지 않으므로, 레포에 없으면 배포는 불가능하다.
       - name: compose 파일 확인
         run: |
           if [ ! -f "${{ inputs.compose-file }}" ]; then
             echo "::error::${{ inputs.compose-file }} 이 레포에 없습니다."
-            echo "::error::러너에 남은 untracked 파일에 의존하고 있을 수 있습니다. 레포에 커밋하세요."
+            echo "::error::checkout 이 작업공간을 비우므로 러너에 수동으로 둔 파일은 쓸 수 없습니다. 레포에 커밋하세요."
             exit 1
           fi
           docker compose -f "${{ inputs.compose-file }}" config >/dev/null

@@ -20,15 +20,22 @@ concurrency:
   group: deploy-frontend
   cancel-in-progress: false
 
+# GITHUB_TOKEN 은 읽기만 있으면 된다. 이 워크플로들은 커밋·이슈·패키지를 건드리지 않는다.
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: self-hosted
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-      # checkout 은 untracked 파일을 지우지 않으므로, 러너에 남은 옛 파일 때문에
-      # "레포에는 없는데 빌드는 되는" 상태가 생긴다. 필요한 파일은 명시적으로 확인한다.
+      # checkout 은 기본으로 git clean -ffdx 를 돌려 작업공간을 비운다.
+      # 즉 러너에 수동으로 만들어 둔 파일은 남지 않는다 — 레포에 없으면 여기서 없다.
+      # 배포가 애매한 docker 에러로 죽지 않도록 먼저 크게 실패시킨다.
       - name: 필요한 파일 확인
         run: |
           missing=0
