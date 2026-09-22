@@ -18,9 +18,9 @@ jobs:
     timeout-minutes: 15
     steps:
       # 재사용 워크플로 안에서 checkout 은 호출한 레포/커밋을 받아온다.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ inputs.node-version }}
           cache: npm

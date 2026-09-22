@@ -26,7 +26,7 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # checkout 은 untracked 파일을 지우지 않는다. 러너에 남은 파일에 기대고 있으면
       # 새 러너에서 조용히 깨지므로, 여기서 크게 실패시킨다.

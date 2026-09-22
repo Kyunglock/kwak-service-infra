@@ -43,15 +43,37 @@ Mockito 단위 테스트입니다. 그 하나가 전체 컨텍스트를 띄우�
 
 ## 알려진 문제 (미해결)
 
+### self-hosted 러너가 등록돼 있지 않다 (배포 전체가 막혀 있음)
+
+**배포는 지금까지 한 번도 실행된 적이 없습니다.** 워크플로 실행 이력을 보면:
+
+- `kwak-service-fe` — `Deploy Frontend` 18회 전부 `cancelled`
+- `kwak-service-be` — `Deploy Backend` 29회 전부 `cancelled`
+
+모두 `created_at` 과 `updated_at` 간격이 정확히 24시간입니다. GitHub 이 러너를
+못 잡은 job 을 24시간 뒤 자동 취소한 것으로, 레포 첫 커밋(2026-06-22)부터
+지금까지 `self-hosted` 라벨을 가진 러너가 job 을 가져간 적이 없습니다.
+운영 컨테이너는 서버에서 수동으로 띄운 것으로 보입니다.
+
+즉 CI 를 붙이기 전에도 배포 자동화는 동작하지 않고 있었습니다. 러너를 등록하기
+전까지는 새 `deploy` job 도 똑같이 24시간 대기 후 취소됩니다.
+
+러너 등록은 서버에서 직접 해야 합니다 (레포 Settings → Actions → Runners →
+New self-hosted runner 가 주는 토큰 사용). `actions/checkout@v7` 은 러너
+v2.327.1 이상을 요구하므로, 새로 받는 러너면 문제없습니다.
+
+러너를 당분간 둘 생각이 없다면, 각 레포 `ci.yml` 의 `deploy` job 조건에서
+`push` 를 빼고 `workflow_dispatch` 전용으로 돌리면 24시간 대기 job 이
+쌓이지 않습니다.
+
 ### kwak-service-be 배포 파일이 레포에 없음
 
 `deploy-compose.yml`은 `docker-compose.yml`을 요구하는데, **kwak-service-be에는
 `docker-compose.yml`도 각 서비스 `Dockerfile`도 git에 없습니다.** gitignore에 있는
 것도 아니고 그냥 존재하지 않습니다.
 
-지금 배포가 도는 이유는 self-hosted 러너 작업공간에 예전에 수동으로 만든 untracked
-파일이 남아 있고, `actions/checkout`이 untracked 파일을 지우지 않기 때문입니다.
-러너를 새로 깔거나 작업공간을 청소하면 배포가 깨집니다.
+위에 적은 대로 배포 job 이 실행된 적이 없어서 이 문제는 아직 드러나지 않았을
+뿐입니다. 러너를 등록하는 순간 `docker compose` 가 파일을 못 찾고 실패합니다.
 
 `deploy-compose.yml`에 파일 존재 확인 단계를 넣어, 이 경우 애매한 docker 에러 대신
 명확한 메시지로 실패하게 해두었습니다. **러너에 있는 실제 파일을 레포에 커밋하는 것이
@@ -62,9 +84,10 @@ collector도 compose가 `env_file: .env`를 요구하는데 `.env`는 당연히 
 
 ### 검토하지 않은 것
 
-- `ci-backend.yml`은 이 환경에서 Gradle 배포판 다운로드가 막혀 **로컬 검증을 못 했습니다.**
-  fe/collector 검사는 전부 실제로 돌려서 통과를 확인했지만 be는 첫 실행에서
-  조정이 필요할 수 있습니다.
+- 세 레포의 검사 워크플로는 모두 GitHub Actions 에서 실제로 돌려 통과를 확인했습니다
+  (fe 38초, collector 35초, be 2분 46초). be 는 MySQL·Redis 서비스 컨테이너로
+  `PortalApplicationTests` 의 컨텍스트 기동까지 확인됐습니다.
+- **배포 워크플로는 아직 한 번도 실행되지 않았습니다** — 러너가 없어서입니다.
 - collector 배포는 **이번에 새로 생긴 동작**입니다. 기존에는 워크플로가 없었습니다.
   main에 머지되는 순간부터 push마다 배포가 돕니다. 러너와 `.env`를 먼저 확인하세요.
 
@@ -74,6 +97,7 @@ collector도 compose가 `env_file: .env`를 요구하는데 `.env`는 당연히 
 |---|---|
 | gitleaks | 시크릿 커밋 사고 방지. fe/be/infra가 public이라 특히 |
 | actionlint | 워크플로 문법. 이번 파일들은 수동으로 돌려 통과 확인함 |
+| Dependabot | 액션 버전 자동 갱신. Node 20 지원 중단 같은 건을 알아서 올려줌 |
 | hadolint | Dockerfile 린트 |
 | Trivy | 이미지/의존성 CVE |
 
@@ -81,3 +105,19 @@ collector도 compose가 `env_file: .env`를 요구하는데 `.env`는 당연히 
 
 서비스 레포가 `@main`으로 호출하므로 infra 변경이 즉시 반영됩니다. 안정성이 필요해지면
 태그를 끊어 `@v1` 형태로 고정하세요.
+
+## 액션 버전
+
+모든 액션을 Node 24 런타임을 쓰는 메이저로 올려두었습니다 (2026-09 기준 최신).
+
+| 액션 | 버전 | 런타임 |
+|---|---|---|
+| actions/checkout | v7 | node24 |
+| actions/setup-node | v7 | node24 |
+| actions/setup-python | v7 | node24 |
+| actions/setup-java | v6 | node24 |
+| actions/upload-artifact | v7 | node24 |
+| gradle/actions/setup-gradle | v6 | node24 |
+
+러너는 2026-09-16 에 Node 20 을 제거했습니다. 구버전 액션을 쓰면 경고가 뜨거나
+동작하지 않습니다. `actions/checkout@v7` 은 self-hosted 러너 v2.327.1 이상을 요구합니다.
