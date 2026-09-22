@@ -11,7 +11,7 @@
 .github/workflows/
   ci-frontend.yml      # kwak-service-fe  — ESLint / 타입체크 / 빌드
   ci-backend.yml       # kwak-service-be  — Gradle 빌드+테스트 / 마이그레이션 규칙
-  ci-collector.yml     # collector        — Ruff / pytest
+  ci-collector.yml     # collector        — pytest
 scripts/
   check-migrations.py  # V*.sql 번호 중복·명명 규칙 검사
 docs/
