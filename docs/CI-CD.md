@@ -4,11 +4,24 @@
 
 ### kwak-service-fe (`ci-frontend.yml`)
 
-| 단계 | 명령 | 비고 |
-|---|---|---|
-| ESLint | `npm run lint` | eslint 9 flat config |
-| 타입체크 | `npm run typecheck` | `tsc --noEmit`. vite 빌드는 타입을 안 본다 |
-| 빌드 | `npm run build` | 배포가 Dockerfile 안에서 도는 그 빌드 |
+검사 3개가 **각각 별도 job** 입니다. PR 체크 목록에 셋이 따로 뜨므로 어느 검사가
+깨졌는지 바로 보이고, 병렬로 돕니다.
+
+| job | 표시 이름 | 명령 | 비고 |
+|---|---|---|---|
+| `lint` | ESLint | `npm run lint` | eslint 9 flat config |
+| `typecheck` | 타입체크 | `npm run typecheck` | `tsc --noEmit`. vite 빌드는 타입을 안 본다 |
+| `build` | 빌드 | `npm run build` | 배포가 Dockerfile 안에서 도는 그 빌드 |
+
+서로 `needs` 로 묶지 않았습니다. lint 가 깨져도 빌드 결과를 같이 보는 편이
+진단에 낫기 때문입니다.
+
+셋은 겹치지 않고 각자 다른 층을 봅니다 — ESLint 는 소스를 텍스트로(파일 단위),
+tsc 는 타입을 계산해(프로젝트 전체), 빌드는 실제 번들을 만들어서. 실제로
+`vite.config.ts` 부재는 앞의 둘을 통과하고 빌드에서만 걸렸습니다.
+
+대신 job 마다 `npm ci` 를 따로 돌립니다. npm 캐시를 공유해 실제 비용은 작고,
+public 레포라 Actions 시간도 무제한입니다.
 
 `react-refresh/only-export-components`와 `react-hooks/exhaustive-deps`는 경고로
 두었습니다(현재 21건). 에러는 0건이어야 통과합니다.
