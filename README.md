@@ -16,7 +16,8 @@
 scripts/
   check-migrations.py  # V*.sql 번호 중복·명명 규칙 검사
 docs/
-  CI-CD.md             # 상세 문서
+  CI-FLOW.md           # 레포별 CI 흐름 — 무엇이 언제 어떻게 도는가
+  CI-CD.md             # 결정 기록 — 왜 그렇게 정했나, 알려진 문제
 ```
 
 ## 서비스 레포에서 쓰는 법
