@@ -51,10 +51,16 @@ Dockerfile 이 없어 현재는 CI 에서 띄울 수 없습니다.
 
 ### kwak-service-be (`ci-backend.yml`)
 
-| 단계 | 명령 | 비고 |
-|---|---|---|
-| 마이그레이션 규칙 | `check-migrations.py` | V번호 중복·명명 규칙 |
-| 빌드+테스트 | `./gradlew build` | 테스트 31파일 / 170개 |
+검사 2개가 **각각 별도 job** 입니다.
+
+| job | 표시 이름 | 명령 | 서비스 컨테이너 |
+|---|---|---|---|
+| `migrations` | 마이그레이션 규칙 | `check-migrations.py` | 없음 |
+| `build-test` | 빌드 + 테스트 | `./gradlew build` | MySQL + Redis |
+
+마이그레이션 검사는 DB 도 JDK 도 필요 없어서 서비스 컨테이너 기동(~30초)을
+기다리지 않습니다. V 번호 중복 같은 실수를 빌드 3분 뒤에 알 이유가 없어
+따로 뺐습니다.
 
 **Flyway는 쓰지 않습니다.** 어느 `build.gradle`에도 의존성이 없고, 마이그레이션은
 `ARCHITECTURE.md` 기준 수동 실행입니다. 도구가 순서를 강제해 주지 않으므로

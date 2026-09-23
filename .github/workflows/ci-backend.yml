@@ -1,4 +1,8 @@
-# kwak-service-be 검사 (Gradle 빌드 + 테스트, 마이그레이션 파일 규칙)
+# kwak-service-be 검사
+#
+# 검사 2개를 각각 별도 job 으로 둔다. 마이그레이션 규칙 검사는 DB 가 필요 없어
+# 서비스 컨테이너 기동을 기다리지 않고 몇 초 만에 결과가 나온다. V 번호 중복
+# 같은 실수를 빌드 3분을 기다린 뒤에 알 이유가 없다.
 name: CI (backend)
 
 on:
@@ -9,12 +13,36 @@ on:
         type: string
         default: '21'
 
-# GITHUB_TOKEN 은 읽기만 있으면 된다. 이 워크플로들은 커밋·이슈·패키지를 건드리지 않는다.
+# GITHUB_TOKEN 은 읽기만 있으면 된다. 커밋·이슈·패키지를 건드리지 않는다.
 permissions:
   contents: read
 
 jobs:
-  check:
+  # BE 는 Flyway 를 쓰지 않고 db/migration/V*.sql 을 수동 실행한다
+  # (ARCHITECTURE.md). 도구가 순서를 강제해 주지 않으므로 파일명과 번호만이라도
+  # 여기서 지킨다. DB 도 JDK 도 필요 없다.
+  migrations:
+    name: 마이그레이션 규칙
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # 검사 스크립트는 infra 에 있다. 호출한 레포를 덮어쓰지 않도록
+      # 별도 디렉터리로 받는다.
+      - name: infra 스크립트 가져오기
+        uses: actions/checkout@v7
+        with:
+          repository: Kyunglock/kwak-service-infra
+          path: .infra
+          persist-credentials: false
+
+      - run: python3 .infra/scripts/check-migrations.py .
+
+  build-test:
+    name: 빌드 + 테스트
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -49,24 +77,12 @@ jobs:
         with:
           persist-credentials: false
 
-      # 마이그레이션 검사 스크립트는 infra 에 있다. 호출한 레포를 덮어쓰지 않도록
-      # 별도 디렉터리로 받는다.
-      - name: infra 스크립트 가져오기
-        uses: actions/checkout@v7
-        with:
-          repository: Kyunglock/kwak-service-infra
-          path: .infra
-          persist-credentials: false
-
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ inputs.java-version }}
 
       - uses: gradle/actions/setup-gradle@v6
-
-      - name: 마이그레이션 파일 규칙 검사
-        run: python3 .infra/scripts/check-migrations.py .
 
       # application.yml / application-local.yml 의 placeholder 는 기본값이 없어
       # 하나라도 비면 컨텍스트가 뜨지 않는다. 전부 더미로 채운다.
