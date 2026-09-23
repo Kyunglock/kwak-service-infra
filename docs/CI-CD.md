@@ -13,6 +13,29 @@
 `react-refresh/only-export-components`와 `react-hooks/exhaustive-deps`는 경고로
 두었습니다(현재 21건). 에러는 0건이어야 통과합니다.
 
+### kwak-service-fe E2E (`e2e-frontend.yml`) — 수동 실행
+
+Playwright 스모크 5개. `npm run preview` 로 빌드 산출물(dist)을 띄우고 실제
+Chromium 에서 확인하므로, ESLint·타입체크가 잡지 못하는 라우팅 깨짐과 런타임
+크래시를 잡습니다.
+
+| 테스트 | 검증하는 것 |
+|---|---|
+| `/resume` 렌더 | 인증 불필요 화면 + 콘솔 에러 없음 |
+| 상단 탭 이동 | `/resume/career`, `/resume/portfolio` 라우팅 |
+| `/login` 렌더 | 콘솔 에러 없음 |
+| `/` → `/login` | 쿠키 없을 때 `ProtectedRoute` 리다이렉트 |
+| 없는 경로 | `path: "*"` → `ErrorPage` |
+
+**백엔드를 띄우지 않습니다.** 쿠키가 없으면 `AuthContext` 가 API 를 호출하지
+않고 `isLoggedIn=false` 로 끝나기 때문에 위 항목들은 결정적으로 재현됩니다.
+
+로그인 이후 화면을 검증하려면 백엔드가 필요하고, `kwak-service-be` 에
+Dockerfile 이 없어 현재는 CI 에서 띄울 수 없습니다.
+
+주의: 상단 탭의 세 번째 라벨은 "사이드 프로젝트"인데 경로는
+`/resume/portfolio` 입니다. 라벨과 경로가 다릅니다.
+
 ### kwak-service-be (`ci-backend.yml`)
 
 | 단계 | 명령 | 비고 |

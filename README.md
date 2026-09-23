@@ -9,9 +9,10 @@
 
 ```
 .github/workflows/
-  ci-frontend.yml      # kwak-service-fe  — ESLint / 타입체크 / 빌드
+  ci-frontend.yml      # kwak-service-fe  — ESLint / 타입체크 / 빌드   (PR·push 자동)
   ci-backend.yml       # kwak-service-be  — Gradle 빌드+테스트 / 마이그레이션 규칙
   ci-collector.yml     # collector        — pytest
+  e2e-frontend.yml     # kwak-service-fe  — Playwright 스모크          (수동 실행)
 scripts/
   check-migrations.py  # V*.sql 번호 중복·명명 규칙 검사
 docs/
@@ -38,6 +39,14 @@ jobs:
 
 재사용 워크플로 안의 `actions/checkout`은 **호출한 레포의 해당 커밋**을 받아옵니다.
 그래서 별도 토큰 없이 동작합니다.
+
+## 수동 실행 워크플로
+
+`e2e-frontend.yml` 은 게이트가 아닙니다. fe 의 `e2e.yml` 이 `workflow_dispatch`
+로만 걸려 있어, Actions 탭 → E2E → Run workflow 로만 돕니다.
+
+브라우저를 띄우느라 평소 검사보다 느리고, 매 push 마다 돌릴 만큼 자주 깨지는
+영역도 아니라서 이렇게 두었습니다.
 
 ## 원칙
 
