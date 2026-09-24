@@ -21,9 +21,16 @@ from pathlib import Path
 
 PATTERN = re.compile(r"^V(\d+)__[A-Za-z0-9_]+\.sql$")
 
+# Gradle 이 src/main/resources 를 build/resources/main 으로 복사하므로, 빌드한 로컬
+# 체크아웃에서는 같은 파일이 두 번 잡혀 전 버전이 "중복"으로 뜬다.
+EXCLUDED_DIRS = {"build"}
+
 
 def main(root: Path) -> int:
-    files = sorted(root.rglob("db/migration/*.sql"))
+    files = sorted(
+        p for p in root.rglob("db/migration/*.sql")
+        if not EXCLUDED_DIRS.intersection(p.relative_to(root).parts)
+    )
     if not files:
         print(f"::warning::{root} 아래에서 마이그레이션 파일을 찾지 못했습니다.")
         return 0
