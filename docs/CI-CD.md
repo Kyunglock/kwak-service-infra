@@ -63,7 +63,6 @@ actionlint 까지만 확인했고 실제 실행 검증은 다음 push 에서 이
 | 검사 | 왜 유용한가 |
 |---|---|
 | gitleaks | 시크릿 커밋 사고 방지. fe/be/infra가 public이라 특히 |
-| actionlint | 워크플로 문법. 이번 파일들은 수동으로 돌려 통과 확인함 |
 | Dependabot | 액션 버전 자동 갱신. Node 20 지원 중단 같은 건을 알아서 올려줌 |
 | hadolint | Dockerfile 린트 |
 | Trivy | 이미지/의존성 CVE |

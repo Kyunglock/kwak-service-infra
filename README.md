@@ -9,10 +9,11 @@
 
 ```
 .github/workflows/
-  ci-frontend.yml      # kwak-service-fe  — ESLint / 타입체크 / 빌드   (PR·push 자동)
-  ci-backend.yml       # kwak-service-be  — Gradle 빌드+테스트 / 마이그레이션 규칙
-  ci-collector.yml     # collector        — pytest
-  e2e-frontend.yml     # kwak-service-fe  — Playwright 스모크          (수동 실행)
+  lint-workflows.yml   # 이 레포 자신     — actionlint                 (PR·push 자동)
+  ci-frontend.yml      # kwak-service-fe  — ESLint / 타입체크 / 빌드   (재사용, PR·push 자동)
+  ci-backend.yml       # kwak-service-be  — Gradle 빌드+테스트 / 마이그레이션 규칙 (재사용)
+  ci-collector.yml     # collector        — pytest                    (재사용)
+  e2e-frontend.yml     # kwak-service-fe  — Playwright 스모크          (재사용, 수동 실행)
 scripts/
   check-migrations.py  # V*.sql 번호 중복·명명 규칙 검사
 docs/

@@ -1,0 +1,30 @@
+# infra 자신의 검사. 여기 있는 ci-*.yml / e2e-*.yml 은 workflow_call 전용이라
+# 자기 레포에서는 절대 실행되지 않는다 — 즉 이 레포 자체에는 원래 게이트가
+# 없었다. 문법이 깨진 채로 main 에 들어가면 세 서비스 레포가 @main 으로
+# 참조하는 순간 즉시, 그것도 job 0개·로그 0개로 조용히 함께 깨진다.
+#
+# actionlint 는 GitHub Actions 워크플로 문법 전용 린터다.
+name: Lint workflows
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: actionlint
+        run: |
+          bash <(curl -sS https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) latest
+          ./actionlint -color
